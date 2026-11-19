@@ -6,6 +6,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 
 const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
 
 const app = express();
 
@@ -16,6 +20,11 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tickets', ticketRoutes);
+
 
 app.get('/', (req, res) => {
     res.json({

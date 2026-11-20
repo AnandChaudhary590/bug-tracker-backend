@@ -298,7 +298,97 @@ const updateTicket = async (req, res) => {
     }
 };
 
+const addComment = async (req, res) => {
+    try {
+        const { text } = req.body;
 
+        if (!text || !text.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Comment cannot be empty'
+            });
+        }
+
+        const ticket = await Ticket.findById(req.params.id);
+
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+
+        const project = await Project.findOne({
+            _id: ticket.project,
+            members: req.user._id
+        });
+
+        if (!project) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied'
+            });
+        }
+
+        ticket.comments.push({
+            user: req.user._id,
+            text: text.trim()
+        });
+
+        await ticket.save();
+
+        await ticket.populate('comments.user', 'name email');
+
+        return res.status(201).json({
+            success: true,
+            message: 'Comment added successfully',
+            comments: ticket.comments
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+const getComments = async (req, res) => {
+    try {
+        const ticket = await Ticket.findById(req.params.id)
+            .populate('comments.user', 'name email');
+
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+
+        const project = await Project.findOne({
+            _id: ticket.project,
+            members: req.user._id
+        });
+
+        if (!project) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            comments: ticket.comments
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 const deleteTicket = async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id);
@@ -345,5 +435,7 @@ module.exports = {
     updateTicket,
     deleteTicket,
     getKanbanBoard,
-    updateTicketStatus
+    updateTicketStatus,
+    addComment,
+    getComments
 };

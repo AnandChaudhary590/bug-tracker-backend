@@ -176,10 +176,76 @@ const deleteProject = async (req, res) => {
     }
 };
 
+
+// ADD PROJECT MEMBER
+const addProjectMember = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Member email is required'
+            });
+        }
+
+        const project = await Project.findOne({
+            _id: req.params.id,
+            owner: req.user._id
+        });
+
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: 'Project not found or you are not the owner'
+            });
+        }
+
+        const User = require('../models/User');
+
+        const member = await User.findOne({
+            email: email.trim().toLowerCase()
+        });
+
+        if (!member) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found. Please check the email.'
+            });
+        }
+
+        if (project.members.some(
+            id => id.toString() === member._id.toString()
+        )) {
+            return res.status(409).json({
+                success: false,
+                message: 'User is already a project member'
+            });
+        }
+
+        project.members.push(member._id);
+        await project.save();
+
+        await project.populate('members', 'name email');
+
+        return res.status(200).json({
+            success: true,
+            message: 'Member added successfully',
+            project
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     createProject,
     getProjects,
     getProjectById,
     updateProject,
-    deleteProject
+    deleteProject,
+    addProjectMember
 };

@@ -8,7 +8,9 @@ const {
     updateTicket,
     deleteTicket,
     getKanbanBoard,
-    updateTicketStatus
+    updateTicketStatus,
+    addComment,
+    getComments
 } = require('../controllers/ticketController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -29,4 +31,9 @@ router.get('/board/:projectId', getKanbanBoard);
 
 router.patch('/:id/status', updateTicketStatus);
 
+// Add Comment to Ticket
+router.post('/:id/comments', addComment);
+
+// Get Ticket Comments
+router.get('/:id/comments', getComments);
 module.exports = router;

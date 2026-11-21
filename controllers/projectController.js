@@ -102,19 +102,25 @@ const getProjectById = async (req, res) => {
 };
 
 // UPDATE PROJECT
+
 const updateProject = async (req, res) => {
     try {
         const { name, description, status } = req.body;
 
-        const project = await Project.findOne({
-            _id: req.params.id,
-            owner: req.user._id
-        });
+        const project = await Project.findById(req.params.id);
 
         if (!project) {
             return res.status(404).json({
                 success: false,
-                message: 'Project not found or you are not the owner'
+                message: 'Project not found'
+            });
+        }
+
+        // Only Admin and Manager can update project
+        if (!['admin', 'manager'].includes(req.projectRole)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to update this project'
             });
         }
 
@@ -148,6 +154,7 @@ const updateProject = async (req, res) => {
     }
 };
 
+
 // DELETE PROJECT
 const deleteProject = async (req, res) => {
     try {
@@ -178,9 +185,13 @@ const deleteProject = async (req, res) => {
 
 
 // ADD PROJECT MEMBER
+
+
 const addProjectMember = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, role = 'developer' } = req.body;
+
+        const allowedRoles = ['manager', 'developer', 'viewer'];
 
         if (!email) {
             return res.status(400).json({
@@ -189,15 +200,27 @@ const addProjectMember = async (req, res) => {
             });
         }
 
-        const project = await Project.findOne({
-            _id: req.params.id,
-            owner: req.user._id
-        });
+        if (!allowedRoles.includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid member role'
+            });
+        }
+
+        const project = await Project.findById(req.params.id);
 
         if (!project) {
             return res.status(404).json({
                 success: false,
-                message: 'Project not found or you are not the owner'
+                message: 'Project not found'
+            });
+        }
+
+        // Only Admin and Manager can add members
+        if (!['admin', 'manager'].includes(req.projectRole)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to add members'
             });
         }
 
@@ -224,8 +247,15 @@ const addProjectMember = async (req, res) => {
         }
 
         project.members.push(member._id);
-        await project.save();
 
+        project.memberRoles = project.memberRoles || [];
+
+        project.memberRoles.push({
+            user: member._id,
+            role
+        });
+
+        await project.save();
         await project.populate('members', 'name email');
 
         return res.status(200).json({
@@ -241,6 +271,8 @@ const addProjectMember = async (req, res) => {
         });
     }
 };
+
+
 module.exports = {
     createProject,
     getProjects,

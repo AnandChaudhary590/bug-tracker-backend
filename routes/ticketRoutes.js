@@ -14,26 +14,48 @@ const {
 } = require('../controllers/ticketController');
 
 const { protect } = require('../middleware/authMiddleware');
+const authorizeProjectRoles = require('../middleware/projectRoleMiddleware');
 
 router.use(protect);
 
 // Create Ticket
-router.post('/', createTicket);
+router.post(
+    '/',
+    authorizeProjectRoles('admin', 'manager', 'developer'),
+    createTicket
+);
 
 // Get Project Tickets
 router.get('/project/:projectId', getProjectTickets);
 
-router.put('/:id', updateTicket);
-
-router.delete('/:id', deleteTicket);
-
+// Get Kanban Board
 router.get('/board/:projectId', getKanbanBoard);
 
-router.patch('/:id/status', updateTicketStatus);
+// Update Ticket
+router.put(
+    '/:id',
+    authorizeProjectRoles('admin', 'manager', 'developer'),
+    updateTicket
+);
 
-// Add Comment to Ticket
+// Delete Ticket
+router.delete(
+    '/:id',
+    authorizeProjectRoles('admin', 'manager'),
+    deleteTicket
+);
+
+// Update Ticket Status
+router.patch(
+    '/:id/status',
+    authorizeProjectRoles('admin', 'manager', 'developer'),
+    updateTicketStatus
+);
+
+// Add Comment
 router.post('/:id/comments', addComment);
 
-// Get Ticket Comments
+// Get Comments
 router.get('/:id/comments', getComments);
+
 module.exports = router;

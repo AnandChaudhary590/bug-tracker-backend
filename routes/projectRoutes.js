@@ -12,6 +12,7 @@ const {
 } = require('../controllers/projectController');
 
 const { protect } = require('../middleware/authMiddleware');
+const authorizeProjectRoles = require('../middleware/projectRoleMiddleware');
 
 // All routes require login
 router.use(protect);
@@ -25,13 +26,13 @@ router.get('/', getProjects);
 // Get Single Project
 router.get('/:id', getProjectById);
 
-// Update Project
-router.put('/:id', updateProject);
+// Update Project - Only Admin (Owner) and Manager
+router.put('/:id', authorizeProjectRoles('admin', 'manager'), updateProject);
 
-// Add Project Member
-router.post('/:id/members', addProjectMember);
+// Add Project Member - Only Admin (Owner) and Manager
+router.post('/:id/members', authorizeProjectRoles('admin', 'manager'), addProjectMember);
 
-// Delete Project
-router.delete('/:id', deleteProject);
+// Delete Project - Only Admin (Owner)
+router.delete('/:id', authorizeProjectRoles('admin'), deleteProject);
 
 module.exports = router;

@@ -34,6 +34,22 @@ const projectSchema = new mongoose.Schema(
             }
         ],
 
+        memberRoles: [
+            {
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                    required: true
+                },
+
+                role: {
+                    type: String,
+                    enum: ['manager', 'developer', 'viewer'],
+                    default: 'developer'
+                }
+            }
+        ],
+
         status: {
             type: String,
             enum: ['active', 'archived'],
